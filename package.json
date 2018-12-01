@@ -1,0 +1,18 @@
+{
+  "name": "sacrifice",
+  "version": "0.0.1",
+  "description": "A game for Ludum Dare 43",
+  "main": "index.js",
+  "scripts": {
+    "build": "poetry boot.poem -b boot.wasm",
+    "watch": "watch \"npm run build\" . --wait 5 -d"
+  },
+  "author": "poetic android",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "fantasyinternet.poem": "^0.22.0",
+    "poetry-compiler": "^0.46.0",
+    "watch": "^1.0.2"
+  }
+}

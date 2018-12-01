@@ -1,0 +1,6 @@
+include "fantasyinternet.poem/display.poem"
+
+export "init" init
+  set_display_mode 0 80 20
+  print "Hello Fantasy Internet!"
+
