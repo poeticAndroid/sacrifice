@@ -20,6 +20,14 @@ var _baddie =
   :sprite = create_image 32`by`32
   :next_time = 100
 
+func reset
+  shots = array
+  baddies = array
+  player:x = 160-16
+  player:y = 140
+  start_tone 1 110 1 4
+  ramp_volume 1 0 1024
+
 export "init" init
   set_display_mode 1 320 180
   set_frame_rate 60 `frames per second`
@@ -35,6 +43,14 @@ export "step" step
   for baddie in baddies
     baddie:x+= (random)*2 - 1
     baddie:y+= random
+    if collides baddie player
+      reset
+    for shot in shots
+      if collides baddie shot
+        baddie:y = screen:height*2
+        shot:y = screen:height*-2
+        start_tone 1 220 1 4
+        ramp_volume 1 0 1024
   if (array_length baddies) && (baddies:0:y > screen:height)
     array_shift baddies
   if _baddie:next_time
@@ -94,3 +110,6 @@ func route_load success img req_id
   if success
     load_router["r"+req_id]:sprite = img
 
+func collides obj1 obj2
+  if obj1:x < obj2:x + obj2:sprite:width && obj1:x + obj1:sprite:width > obj2:x && obj1:y < obj2:y + obj2:sprite:height && obj1:y + obj1:sprite:height > obj2:y
+    return true

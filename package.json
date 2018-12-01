@@ -4,7 +4,7 @@
   "description": "A game for Ludum Dare 43",
   "main": "index.js",
   "scripts": {
-    "build": "poetry boot.poem -b boot.wasm",
+    "build": "poetry boot.poem -b boot.wasm && echo ok",
     "watch": "watch \"npm run build\" . --wait 5 -d"
   },
   "author": "poetic android",
