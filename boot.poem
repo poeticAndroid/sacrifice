@@ -1,6 +1,96 @@
+import "Math" "random" random 0 1
 include "fantasyinternet.poem/display.poem"
+include "fantasyinternet.poem/graphics.wast"
+include "fantasyinternet.poem/game_input.poem"
+include "fantasyinternet.poem/read_image.poem"
+include "fantasyinternet.poem/audio.poem"
+
+var load_router = object
+var bg = rgb 0 0
+var player =
+  :sprite = create_image 32`by`32
+  :can_shoot = true
+  :x = 160-16
+  :y = 140
+var shots = array
+var _shot =
+  :sprite = create_image 16`by`16
+var baddies = array
+var _baddie =
+  :sprite = create_image 32`by`32
+  :next_time = 100
 
 export "init" init
-  set_display_mode 0 80 20
-  print "Hello Fantasy Internet!"
+  set_display_mode 1 320 180
+  set_frame_rate 60 `frames per second`
+  load_sprite "ship" player
+  load_sprite "shot" _shot
+  load_sprite "bad" _baddie
+
+export "step" step
+  for shot in shots
+    shot:y-=2
+  if (array_length shots) && (shots:0:y < -16)
+    array_shift shots
+  for baddie in baddies
+    baddie:x+= (random)*2 - 1
+    baddie:y+= random
+  if (array_length baddies) && (baddies:0:y > screen:height)
+    array_shift baddies
+  if _baddie:next_time
+    _baddie:next_time--
+  else
+    spawn_baddie
+    _baddie:next_time = 60
+  var x = get_game_axis_x
+  var y = get_game_axis_y
+  player:x += x
+  player:y += y
+  if get_game_button_a 
+    if player:can_shoot
+      spawn_shot
+    player:can_shoot = false
+  else
+    player:can_shoot = true
+
+export "display" display
+  set_blending_mode 0
+  rect 0 0 screen:width screen:height bg
+  set_blending_mode 1
+  for baddie in baddies
+    draw_sprite baddie
+  for shot in shots
+    draw_sprite shot
+  draw_sprite player
+  display_memory
+
+func spawn_shot
+  var shot =
+    :sprite = _shot:sprite
+    :x = player:x+8
+    :y = player:y-8
+  array_push shots shot
+  var chan = 0
+  start_tone chan 440 1
+  ramp_frequency chan 220 128
+  ramp_volume chan 0 128
+
+func spawn_baddie
+  var baddie =
+    :sprite = _baddie:sprite
+    :x = screen:width * random
+    :y = -32
+  array_push baddies baddie
+
+~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ 
+
+func draw_sprite obj
+  draw_image obj:sprite 0 0`to`screen obj:x obj:y obj:sprite:width obj:sprite:height
+
+func load_sprite file obj
+  load_router["r"+(read_image "gfx/"+file+".png" #route_load)] = obj
+
+func route_load success img req_id
+  if success
+    load_router["r"+req_id]:sprite = img
 
