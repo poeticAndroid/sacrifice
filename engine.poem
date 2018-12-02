@@ -7,6 +7,9 @@ var load_router = object
 func draw_sprite obj
   draw_image obj:sprite obj:frame*obj:width 0`to`screen obj:x obj:y obj:width obj:height
 
+func load_txt file obj
+  load_router["r"+(read "./"+file+".md" #route_txt_load)] = obj
+
 func load_font file
   read_image "gfx/"+file+".png" #route_font_load
 
@@ -15,6 +18,11 @@ func load_sprite file obj
 
 func load_level file obj
   load_router["r"+(read "levels/"+file+".json" #route_level_load)] = obj
+
+func route_txt_load success data req_id
+  var obj = load_router["r"+req_id]
+  if success
+    obj:txt = ""+data
 
 func route_font_load success img req_id
   if success
