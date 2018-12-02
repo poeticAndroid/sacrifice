@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "poetry boot.poem -b boot.wasm && echo ok",
-    "watch": "watch \"npm run build\" . --wait 5 -d"
+    "watch": "watch \"npm run build\" . --wait 8 -d"
   },
   "author": "poetic android",
   "license": "ISC",

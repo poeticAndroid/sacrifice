@@ -11,11 +11,9 @@ var level =
 var player =
   :width = 16
   :height = 16
-  :frame = 0
-  :x = 160-8
-  :y = 140
-  :vx = 0
-  :vy = 0
+var _guy =
+  :width = 8
+  :height = 8
 
 func reset
   player:vx = 0
@@ -26,6 +24,10 @@ func reset
   player:y = level:data:platforms[num]:y - player:height
   start_tone 0 55 1 4
   ramp_volume 0 0 1024
+  for platform in level:data:platforms
+    platform:guy=null
+    platform:dest=null
+  spawn_guy
 
 export "init" init
   set_display_mode 1 320 180
@@ -33,6 +35,8 @@ export "init" init
   load_sprite "level1" level
   load_level "level1" level
   load_sprite "taxi" player
+  load_sprite "guy" _guy
+  load_font "font" 6 8
 
 export "step" step
   player:vy += 0.01 * 0.25 ~ gravity
@@ -59,17 +63,52 @@ export "display" display
   set_blending_mode 0
   draw_sprite level
   set_blending_mode 1
+  var i=0
   for platform in level:data:platforms
     if platform:width == null
       platform:width = 32
       platform:height = 4
+    if platform:dest
+      set_color rgb 255
+    else
+      set_color rgb 127
     rect platform:x platform:y platform:width platform:height
+    set_cursor platform:x+platform:width/2-3 platform:y+platform:height+1
+    draw_text ""+(i+1)
     if player:gear && collides player platform
+      if platform:guy
+        if player:x-platform:x > platform:guy-4
+          platform:guy+=0.5
+        elsif platform:dest==null
+          platform:guy=null
+          var num = i
+          while num == i
+            num = floor (array_length level:data:platforms) * (random)
+          level:data:platforms[num]:dest = true
+      elsif platform:dest
+        platform:guy = player:x-platform:x
       player:vx = 0
       player:vy = 0
       player:y = platform:y - player:height
+    i++
   if sprite_collide player
     reset
+  for platform in level:data:platforms
+    if platform:guy
+      _guy:x = platform:x + platform:guy
+      _guy:y = platform:y - 8
+      if platform:dest
+        platform:guy+=0.5
+      if platform:guy > platform:width-8
+        spawn_guy
+        platform:guy=null
+        platform:dest=null
+      draw_sprite _guy
   draw_sprite player
   display_memory
 
+func spawn_guy
+  var num = floor (array_length level:data:platforms) * (random)
+  while level:data:platforms[num]:guy
+    num = floor (array_length level:data:platforms) * (random)
+  level:data:platforms[num]:guy = 1
