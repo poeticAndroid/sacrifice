@@ -1,115 +1,75 @@
 import "Math" "random" random 0 1
+include "./engine.poem"
 include "fantasyinternet.poem/display.poem"
 include "fantasyinternet.poem/graphics.wast"
 include "fantasyinternet.poem/game_input.poem"
-include "fantasyinternet.poem/read_image.poem"
 include "fantasyinternet.poem/audio.poem"
 
-var load_router = object
-var bg = rgb 0 0
+var level =
+  :data =
+    :platforms = array
 var player =
-  :sprite = create_image 32`by`32
-  :can_shoot = true
-  :x = 160-16
+  :width = 16
+  :height = 16
+  :frame = 0
+  :x = 160-8
   :y = 140
-var shots = array
-var _shot =
-  :sprite = create_image 16`by`16
-var baddies = array
-var _baddie =
-  :sprite = create_image 32`by`32
-  :next_time = 100
+  :vx = 0
+  :vy = 0
 
 func reset
-  shots = array
-  baddies = array
-  player:x = 160-16
-  player:y = 140
-  start_tone 1 110 1 4
-  ramp_volume 1 0 1024
+  player:vx = 0
+  player:vy = -.1
+  player:gear = true
+  var num = floor (array_length level:data:platforms) * (random)
+  player:x = level:data:platforms[num]:x + 8
+  player:y = level:data:platforms[num]:y - player:height
+  start_tone 0 55 1 4
+  ramp_volume 0 0 1024
 
 export "init" init
   set_display_mode 1 320 180
   set_frame_rate 60 `frames per second`
-  load_sprite "ship" player
-  load_sprite "shot" _shot
-  load_sprite "bad" _baddie
+  load_sprite "level1" level
+  load_level "level1" level
+  load_sprite "taxi" player
 
 export "step" step
-  for shot in shots
-    shot:y-=2
-  if (array_length shots) && (shots:0:y < -16)
-    array_shift shots
-  for baddie in baddies
-    baddie:x+= (random)*2 - 1
-    baddie:y+= random
-    if collides baddie player
-      reset
-    for shot in shots
-      if collides baddie shot
-        baddie:y = screen:height*2
-        shot:y = screen:height*-2
-        start_tone 1 220 1 4
-        ramp_volume 1 0 1024
-  if (array_length baddies) && (baddies:0:y > screen:height)
-    array_shift baddies
-  if _baddie:next_time
-    _baddie:next_time--
+  player:vy += 0.01 * 0.25 ~ gravity
+  player:x += player:vx
+  player:y += player:vy
+  if get_game_button_b
+    player:vx += 0.01 * get_game_axis_x
+    player:vy -= 0.01
+    player:thrust = true
+    player:gear = false
+    start_tone 1 110 1 4
   else
-    spawn_baddie
-    _baddie:next_time = 60
-  var x = get_game_axis_x
-  var y = get_game_axis_y
-  player:x += x
-  player:y += y
-  if get_game_button_a 
-    if player:can_shoot
-      spawn_shot
-    player:can_shoot = false
+    ramp_volume 1 0 100
+    player:thrust = false
+  if get_game_button_y
+    if player:gearctrl
+      player:gear = (player:gear == false)
+      player:gearctrl = false
   else
-    player:can_shoot = true
+    player:gearctrl = true
+  player:frame = player:gear*2 + player:thrust
 
 export "display" display
   set_blending_mode 0
-  rect 0 0 screen:width screen:height bg
+  draw_sprite level
   set_blending_mode 1
-  for baddie in baddies
-    draw_sprite baddie
-  for shot in shots
-    draw_sprite shot
+  for platform in level:data:platforms
+    if platform:width == null
+      platform:width = 32
+      platform:height = 4
+    rect platform:x platform:y platform:width platform:height
+    if player:gear && collides player platform
+      player:vx = 0
+      player:vy = 0
+      player:y = platform:y - player:height
+  if sprite_collide player
+    reset
   draw_sprite player
   display_memory
 
-func spawn_shot
-  var shot =
-    :sprite = _shot:sprite
-    :x = player:x+8
-    :y = player:y-8
-  array_push shots shot
-  var chan = 0
-  start_tone chan 440 1
-  ramp_frequency chan 220 128
-  ramp_volume chan 0 128
-
-func spawn_baddie
-  var baddie =
-    :sprite = _baddie:sprite
-    :x = screen:width * random
-    :y = -32
-  array_push baddies baddie
-
-~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ 
-
-func draw_sprite obj
-  draw_image obj:sprite 0 0`to`screen obj:x obj:y obj:sprite:width obj:sprite:height
-
-func load_sprite file obj
-  load_router["r"+(read_image "gfx/"+file+".png" #route_load)] = obj
-
-func route_load success img req_id
-  if success
-    load_router["r"+req_id]:sprite = img
-
-func collides obj1 obj2
-  if obj1:x < obj2:x + obj2:sprite:width && obj1:x + obj1:sprite:width > obj2:x && obj1:y < obj2:y + obj2:sprite:height && obj1:y + obj1:sprite:height > obj2:y
-    return true

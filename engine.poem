@@ -1,0 +1,45 @@
+include "fantasyinternet.poem/filesystem.poem"
+include "fantasyinternet.poem/read_image.poem"
+include "fantasyinternet.poem/graphics.wast"
+
+var load_router = object
+
+func draw_sprite obj
+  draw_image obj:sprite obj:frame*obj:width 0`to`screen obj:x obj:y obj:width obj:height
+
+func load_sprite file obj
+  load_router["r"+(read_image "gfx/"+file+".png" #route_load)] = obj
+
+func load_level file obj
+  load_router["r"+(read "levels/"+file+".json" #route_level_load)] = obj
+
+func route_load success img req_id
+  var obj = load_router["r"+req_id]
+  if success
+    obj:sprite = img
+    if obj:width == null
+      obj:width = obj:sprite:width
+      obj:height = obj:sprite:height
+
+func route_level_load success data req_id
+  var obj = load_router["r"+req_id]
+  if success
+    obj:data = json_decode data
+
+func collides obj1 obj2
+  if obj1:x < obj2:x + obj2:width && obj1:x + obj1:width > obj2:x && obj1:y < obj2:y + obj2:height && obj1:y + obj1:height > obj2:y
+    return true
+
+func is_transparent img x y
+  var c = pget img x y
+  return (binary_read c 3) < 128
+
+func is_solid img x y
+  return false == (is_transparent img x y)
+
+func sprite_collide obj
+  for y in range 0 obj:height
+    for x in range 0 obj:width
+      if (is_solid obj:sprite x+obj:frame*obj:width y) && (is_solid screen (x+obj:x) (y+obj:y))
+        return true
+  return false
