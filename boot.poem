@@ -111,7 +111,7 @@ export "display" display
       rect platform:x platform:y platform:width platform:height
       set_cursor platform:x+platform:width/2-3 platform:y+platform:height+1
       draw_text ""+(i+1)
-      if player:gear && collides player platform
+      if player:gear && stands_on player platform
         if platform:guy
           if player:x-platform:x > platform:guy-4
             platform:guy+=0.5
@@ -176,7 +176,7 @@ func next_level
     var l = 0
   level = levels[l]
   if level
-    deliveries_left = level:data:deliveries
+    deliveries_left = 0+level:data:deliveries
     lives++
     reset
   else

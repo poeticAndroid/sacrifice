@@ -45,6 +45,9 @@ func collides obj1 obj2
   if obj1:x < obj2:x + obj2:width && obj1:x + obj1:width > obj2:x && obj1:y < obj2:y + obj2:height && obj1:y + obj1:height > obj2:y
     return true
 
+func stands_on obj plat
+  return obj:x >= plat:x && obj:x+obj:width <= plat:x+plat:width && obj:y+obj:height > plat:y && obj:y+obj:height < plat:y+plat:height
+
 func is_transparent img x y
   var c = pget img x y
   return (binary_read c 3) < 128
